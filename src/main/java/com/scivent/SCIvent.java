@@ -1,5 +1,6 @@
 package com.scivent;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -11,7 +12,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import net.md_5.bungee.api.ChatColor;
 
 
-public class App extends JavaPlugin implements Listener {
+public class SCIvent extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
@@ -34,6 +35,8 @@ public class App extends JavaPlugin implements Listener {
             event.setJoinMessage(ChatColor.GREEN + "Witaj " + ChatColor.AQUA + player.getDisplayName() + ChatColor.GREEN + " na SCIvencie!");   
         else
             event.setJoinMessage((ChatColor.GREEN + "Witaj ponownie, " + ChatColor.AQUA + player.getDisplayName()));
+
+        Utils.saturatePlayer(player);
     }
 
     @EventHandler
@@ -45,7 +48,11 @@ public class App extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
-        Utils.saturatePlayer(player);
+        
+        //saturates player 1 tick later after respawning to prevent effect clearing
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            Utils.saturatePlayer(player);
+        }, 1L);
     }
 
 }
