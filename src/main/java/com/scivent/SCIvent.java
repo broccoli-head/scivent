@@ -26,13 +26,14 @@ public class SCIvent extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
-        getLogger().info("SCIvent plugin loaded correctly!");
-
         pluginInstance = this;
         createConfigFile();
 
         getServer().getPluginManager().registerEvents(this, this);
         this.getCommand("duel").setExecutor(new Duel());
+        this.getCommand("uhc").setExecutor(new Uhc());
+
+        getLogger().info("SCIvent plugin loaded correctly!");
     }
 
     @Override
@@ -40,26 +41,32 @@ public class SCIvent extends JavaPlugin implements Listener {
         getLogger().info("SCIvent plugin has been unloaded!");
     }
 
+
     public static SCIvent getInstance() {
         return pluginInstance;
     }
-
     public FileConfiguration getConfig() {
         return this.pluginConfig;
     }
+    public File getConfigFile() {
+        return this.configFile;
+    }
 
+    
     private void createConfigFile() {
-        //creating and loading plugin config file
+        //creates the config file if it doesn't exist
         configFile = new File(getDataFolder(), "config.yml");
         if (!configFile.exists()) {
             configFile.getParentFile().mkdirs();
             saveResource("config.yml", false);
         }
 
+        //tries to load the config file
         pluginConfig = new YamlConfiguration();
         try {
             pluginConfig.load(configFile);
-        } catch (IOException | InvalidConfigurationException e) {
+        }
+        catch (IOException | InvalidConfigurationException e) {
             e.printStackTrace();
         }
     }

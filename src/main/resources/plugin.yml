@@ -1,6 +1,8 @@
 main: com.scivent.SCIvent
 name: SCIvent
 version: 1.0
+api-version: "1.21.11"
+author: "broccoli-head"
 
 commands:
   duel:
