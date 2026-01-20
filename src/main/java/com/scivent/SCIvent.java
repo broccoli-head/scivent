@@ -1,6 +1,12 @@
 package com.scivent;
 
+import java.io.File;
+import java.io.IOException;
+
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -14,9 +20,16 @@ import net.md_5.bungee.api.ChatColor;
 
 public class SCIvent extends JavaPlugin implements Listener {
 
+    private static SCIvent pluginInstance;
+    private File configFile;
+    private FileConfiguration pluginConfig;
+
     @Override
     public void onEnable() {
         getLogger().info("SCIvent plugin loaded correctly!");
+
+        pluginInstance = this;
+        createConfigFile();
 
         getServer().getPluginManager().registerEvents(this, this);
         this.getCommand("duel").setExecutor(new Duel());
@@ -26,6 +39,31 @@ public class SCIvent extends JavaPlugin implements Listener {
     public void onDisable() {
         getLogger().info("SCIvent plugin has been unloaded!");
     }
+
+    public static SCIvent getInstance() {
+        return pluginInstance;
+    }
+
+    public FileConfiguration getConfig() {
+        return this.pluginConfig;
+    }
+
+    private void createConfigFile() {
+        //creating and loading plugin config file
+        configFile = new File(getDataFolder(), "config.yml");
+        if (!configFile.exists()) {
+            configFile.getParentFile().mkdirs();
+            saveResource("config.yml", false);
+        }
+
+        pluginConfig = new YamlConfiguration();
+        try {
+            pluginConfig.load(configFile);
+        } catch (IOException | InvalidConfigurationException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {

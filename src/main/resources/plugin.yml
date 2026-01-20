@@ -4,8 +4,11 @@ version: 1.0
 
 commands:
   duel:
-    description: "Wyzwij innego gracza na pojedynek!"
+    description: "Challenge a player for a duel!"
+    usage: /<command>
+  uhc:
+    description: "Start the UHC game."
     usage: /<command>
   reset:
-    description: "Awaryjny reset"
+    description: "Emergency reset"
     usage: /<command>
