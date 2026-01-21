@@ -12,6 +12,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
 
 import net.md_5.bungee.api.ChatColor;
 
@@ -22,6 +23,7 @@ public class Uhc implements CommandExecutor, TabCompleter {
     FileConfiguration config = plugin.getConfig();
     File configFile = plugin.getConfigFile();
     int changesCounter = 0;
+    BukkitTask uhcTask;
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args) {
@@ -53,19 +55,10 @@ public class Uhc implements CommandExecutor, TabCompleter {
         }
         
         else if (args[0].equals("start")) {
-            Location spawnLoc = getSpawn(sender);
-            if (spawnLoc == null) return true;
-
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                player.teleport(spawnLoc);
-                player.setRespawnLocation(spawnLoc);
-                player.sendTitle("UHC started!", "", 10, 50, 10);
-            }
-
-            Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
-                changesCounter++;
-                Bukkit.broadcastMessage(ChatColor.GREEN + "" + changesCounter + ". change");
-            }, Constants.TICK * 30, Constants.TICK * 30);  
+            Location spawnLoc = getSpawn();
+            if (spawnLoc == null)
+                sender.sendMessage(ChatColor.RED + "Player spawn location is not set. Use /uhc setSpawn");
+            else startUhc(spawnLoc);  
             return true;
         }
 
@@ -97,29 +90,50 @@ public class Uhc implements CommandExecutor, TabCompleter {
     }
 
     //gets the player spawn location from a config file
-    private Location getSpawn(CommandSender sender) {
-        if (
-            config.contains("uhc.spawn.world") &&
-            config.contains("uhc.spawn.x") &&
-            config.contains("uhc.spawn.y") &&
-            config.contains("uhc.spawn.y") &&
-            config.contains("uhc.spawn.pitch") &&
-            config.contains("uhc.spawn.yaw")
-        ) {
-            Location loc = new Location(
-                Bukkit.getWorld(config.getString("uhc.spawn.world")),
-                config.getDouble("uhc.spawn.x"),
-                config.getDouble("uhc.spawn.y"),
-                config.getDouble("uhc.spawn.z"),
-                (float) config.getDouble("uhc.spawn.yaw"),
-                (float) config.getDouble("uhc.spawn.pitch")
-            );
+    private Location getSpawn() {
+        String path = "uhc.spawn";
 
-            return loc;
+        if (
+            config.contains(path + ".world") && config.contains(path + ".x") &&
+            config.contains(path + ".y") && config.contains(path + ".z") &&
+            config.contains(path + ".yaw") && config.contains(path + ".pitch")
+        ) {
+            return new Location(
+                Bukkit.getWorld(config.getString("uhc.spawn.world")),
+                config.getDouble(path + ".x"),
+                config.getDouble(path + ".y"),
+                config.getDouble(path + ".z"),
+                (float) config.getDouble(path + "yaw"),
+                (float) config.getDouble(path + "pitch")
+            );
         }
-        else {
-            sender.sendMessage(ChatColor.RED + "Player spawn location is not set. Use /uhc setSpawn");
-            return null;
+        else return null;
+    }
+
+
+    private void startUhc(Location spawnLoc) {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.teleport(spawnLoc);
+            player.setRespawnLocation(spawnLoc);
+            player.sendTitle(
+                ChatColor.AQUA + "UHC" + ChatColor.GOLD + "się rozpoczęło!",
+                "", 10, 50, 10
+            );
         }
+
+        uhcTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            changesCounter++;
+            Bukkit.broadcastMessage(ChatColor.GREEN + "" + changesCounter + ". change");
+
+            for(Player player : Bukkit.getOnlinePlayers()) {
+                UhcEvents events = new UhcEvents(player);
+                events.randomizeEvent();
+            }
+        }, Constants.TICK * 30, Constants.TICK * 30);
+    }
+
+    private void stopUhc() {
+        //stops repeating task timer from startUhc()
+        uhcTask.cancel();
     }
 }
