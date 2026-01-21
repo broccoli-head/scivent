@@ -108,7 +108,7 @@ public class Uhc implements CommandExecutor, TabCompleter {
             config.contains(path + ".yaw") && config.contains(path + ".pitch")
         ) {
             return new Location(
-                Bukkit.getWorld(config.getString("uhc.spawn.world")),
+                Bukkit.getWorld(config.getString(path + ".world")),
                 config.getDouble(path + ".x"),
                 config.getDouble(path + ".y"),
                 config.getDouble(path + ".z"),

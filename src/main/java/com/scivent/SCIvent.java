@@ -34,6 +34,7 @@ public class SCIvent extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
         this.getCommand("duel").setExecutor(new Duel());
         this.getCommand("uhc").setExecutor(new Uhc());
+        this.getCommand("lobby").setExecutor(new Lobby());
 
         getLogger().info("SCIvent plugin loaded correctly!");
 
