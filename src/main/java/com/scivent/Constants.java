@@ -8,6 +8,6 @@ public class Constants {
 
     //UHC constants
     public static final String[] UHC_OPTIONS = {"start", "setSpawn"};   //command arguments
-    public static final int UHC_SPAWN_TNT_PERIOD = 30;
-    public static final int UHC_TNT_COUNT = 5;
+    public static final int UHC_SPAWN_ENTITY_PERIOD = 20;   //in seconds
+    public static final int UHC_SPAWNED_ENTITY_COUNT = 5;
 }

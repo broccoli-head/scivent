@@ -2,9 +2,11 @@ package com.scivent;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -12,6 +14,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.scheduler.BukkitTask;
 
 import net.md_5.bungee.api.ChatColor;
@@ -22,6 +26,8 @@ public class Uhc implements CommandExecutor, TabCompleter {
     SCIvent plugin = SCIvent.getInstance();
     FileConfiguration config = plugin.getConfig();
     File configFile = plugin.getConfigFile();
+
+    ArrayList<Player> alivePlayers = new ArrayList<Player>(Bukkit.getOnlinePlayers());
     int changesCounter = 0;
     BukkitTask uhcTask;
 
@@ -131,9 +137,23 @@ public class Uhc implements CommandExecutor, TabCompleter {
             }
         }, Constants.TICK * 30, Constants.TICK * 30);
     }
-
+    
     private void stopUhc() {
         //stops repeating task timer from startUhc()
         uhcTask.cancel();
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        Player player = event.getEntity();
+
+        //strikes a lightning at the player's death location
+        Location deathLocation = player.getLastDeathLocation();
+        player.getWorld().strikeLightning(deathLocation);
+
+        //respawns the player as a spectator
+        player.spigot().respawn();
+        player.teleport(deathLocation);
+        player.setGameMode(GameMode.SPECTATOR);
     }
 }
