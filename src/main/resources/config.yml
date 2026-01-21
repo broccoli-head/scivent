@@ -1,1 +1,41 @@
-# SCIVENT PLUGIN CONFIG FILE
+# ================================== #
+#     SCIVENT PLUGIN CONFIG FILE     #
+#     CREATED BY: broccoli-head      #
+# ================================== #
+
+general:
+  lobbySpawn:
+    world: world
+    x: null
+    y: null
+    z: null
+    yaw: 0
+    pitch: 0
+
+uhc:
+  # Location, where players are spawning at the start of the game
+  spawn:
+    world: world
+    x: null
+    y: null
+    z: null
+    yaw: 0
+    pitch: 0
+
+  # Time period (in seconds) between different events happening
+  eventInterval: 180
+
+  events:
+    fallingTNT:
+      enable: true
+      # Time period (in seconds) between TNT spawns
+      spawnInterval: 5
+      # How many times action should happen
+      repeatCount: 5
+
+    fallingAnvil:
+      enable: true
+      # Time period (in seconds) between anvil spawns
+      spawnInterval: 5
+      # How many times action should happen
+      repeatCount: 5

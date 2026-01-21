@@ -1,5 +1,7 @@
 package com.scivent;
 
+import org.bukkit.entity.Player;
+
 public interface UhcInterface {
-    void executeEvent();
+    void executeEvent(Player player);
 }

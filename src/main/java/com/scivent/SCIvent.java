@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -21,8 +23,8 @@ import net.md_5.bungee.api.ChatColor;
 public class SCIvent extends JavaPlugin implements Listener {
 
     private static SCIvent pluginInstance;
-    private File configFile;
     private FileConfiguration pluginConfig;
+    private File configFile;
 
     @Override
     public void onEnable() {
@@ -34,6 +36,19 @@ public class SCIvent extends JavaPlugin implements Listener {
         this.getCommand("uhc").setExecutor(new Uhc());
 
         getLogger().info("SCIvent plugin loaded correctly!");
+
+        World defaultWorld = Bukkit.getWorld("world");
+        if (defaultWorld != null) {
+            Location defaultSpawn = defaultWorld.getSpawnLocation();
+            String path = "general.lobbySpawn";
+
+            pluginConfig.set(path + ".world", defaultWorld.getName());
+            pluginConfig.set(path + ".x", defaultSpawn.getX());
+            pluginConfig.set(path + ".y", defaultSpawn.getY());
+            pluginConfig.set(path + ".z", defaultSpawn.getZ());
+            pluginConfig.set(path + ".yaw", defaultSpawn.getYaw());
+            pluginConfig.set(path + ".pitch", defaultSpawn.getPitch());
+        }
     }
 
     @Override
@@ -46,7 +61,7 @@ public class SCIvent extends JavaPlugin implements Listener {
         return pluginInstance;
     }
     public FileConfiguration getConfig() {
-        return this.pluginConfig;
+        return pluginConfig;
     }
     public File getConfigFile() {
         return this.configFile;

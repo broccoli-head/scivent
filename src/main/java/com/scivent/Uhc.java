@@ -16,6 +16,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitTask;
 
 import net.md_5.bungee.api.ChatColor;
@@ -23,25 +24,23 @@ import net.md_5.bungee.api.ChatColor;
 
 public class Uhc implements CommandExecutor, TabCompleter {
     
-    SCIvent plugin = SCIvent.getInstance();
-    FileConfiguration config = plugin.getConfig();
-    File configFile = plugin.getConfigFile();
+    private SCIvent plugin = SCIvent.getInstance();
+    private FileConfiguration config = plugin.getConfig();
+    private File configFile = plugin.getConfigFile();
 
-    ArrayList<Player> alivePlayers = new ArrayList<Player>(Bukkit.getOnlinePlayers());
-    int changesCounter = 0;
-    BukkitTask uhcTask;
+    private ArrayList<Player> alivePlayers;
+    private BukkitTask uhcTask;
+
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args) {
         if (!(sender instanceof Player)) return null;
         if (args.length != 1) return List.of();
-        
         return List.of(Constants.UHC_OPTIONS);
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        
         if(args.length != 1) {
             sendErrorMsg(sender);
             return true;
@@ -57,21 +56,25 @@ public class Uhc implements CommandExecutor, TabCompleter {
             Player player = (Player) sender;
             setSpawn(player.getLocation());
             player.sendMessage(ChatColor.GREEN + "Player spawn location has been successfully set!");
-            return true;
         }
         
         else if (args[0].equals("start")) {
             Location spawnLoc = getSpawn();
             if (spawnLoc == null)
                 sender.sendMessage(ChatColor.RED + "Player spawn location is not set. Use /uhc setSpawn");
-            else startUhc(spawnLoc);  
-            return true;
+
+            else if (!Lobby.checkLobbyLoc())
+                sender.sendMessage(ChatColor.RED + "Lobby spawn location is not set. Use /lobby setSpawn");
+
+            else startUhc(sender, spawnLoc);
         }
 
-        else {
-            sendErrorMsg(sender);
-            return true;
-        }
+        else if (args[0].equals("stop")) {
+            uhcTask.cancel();
+        }   
+        
+        else sendErrorMsg(sender);
+        return true;
     }
 
     private void sendErrorMsg(CommandSender sender) {
@@ -117,35 +120,45 @@ public class Uhc implements CommandExecutor, TabCompleter {
     }
 
 
-    private void startUhc(Location spawnLoc) {
-        for (Player player : Bukkit.getOnlinePlayers()) {
+    private void startUhc(CommandSender sender, Location spawnLoc) {
+        alivePlayers = new ArrayList<Player>(Bukkit.getOnlinePlayers());
+        int eventInterval = config.getInt("uhc.eventInterval");
+        
+        if (alivePlayers.size() < 2) {
+            sender.sendMessage(ChatColor.RED + "You cannot start the UHC with only one player online!");
+            return;
+        }
+
+        for (Player player : alivePlayers) {
             player.teleport(spawnLoc);
-            player.setRespawnLocation(spawnLoc);
+            player.setHealth(Constants.MAX_HEALTH);
+            player.setFoodLevel(Constants.MAX_FOOD);
+
+            for (PotionEffect effect : player.getActivePotionEffects())
+                player.removePotionEffect(effect.getType());
+            
             player.sendTitle(
-                ChatColor.AQUA + "UHC" + ChatColor.GOLD + "się rozpoczęło!",
-                "", 10, 50, 10
+                ChatColor.AQUA + "UHC" + ChatColor.GOLD + " się rozpoczęło!",
+                "", 20, 60, 10
             );
         }
 
+        UhcEvents events = new UhcEvents();
         uhcTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            changesCounter++;
-            Bukkit.broadcastMessage(ChatColor.GREEN + "" + changesCounter + ". change");
-
-            for(Player player : Bukkit.getOnlinePlayers()) {
-                UhcEvents events = new UhcEvents(player);
-                events.randomizeEvent();
-            }
-        }, Constants.TICK * 30, Constants.TICK * 30);
+            events.randomizeEvent(alivePlayers);
+        }, eventInterval * 30, Constants.SECOND * 30);
     }
     
-    private void stopUhc() {
+    private void stopUhc(Player winner) {
         //stops repeating task timer from startUhc()
         uhcTask.cancel();
+        Bukkit.broadcastMessage(winner.getName() + " wygrał!");
     }
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
         Player player = event.getEntity();
+        alivePlayers.remove(player);
 
         //strikes a lightning at the player's death location
         Location deathLocation = player.getLastDeathLocation();
@@ -155,5 +168,11 @@ public class Uhc implements CommandExecutor, TabCompleter {
         player.spigot().respawn();
         player.teleport(deathLocation);
         player.setGameMode(GameMode.SPECTATOR);
+
+        //ends the game when only one player is alive
+        if (alivePlayers.size() < 2) {
+            Player winner = alivePlayers.get(0);
+            stopUhc(winner);
+        } 
     }
 }

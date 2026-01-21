@@ -1,69 +1,80 @@
 package com.scivent;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.FallingBlock;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
 import org.bukkit.scheduler.BukkitTask;
 
+
 public class UhcEvents {
-    SCIvent plugin = SCIvent.getInstance();
-    Player player;
 
-    BukkitTask spawnTNTtask;
-    BukkitTask spawnAnvilTask;
-    int TNTcounter = 0;
-    int anvilCounter = 0;
+    private SCIvent plugin = SCIvent.getInstance();
+    private FileConfiguration config = plugin.getConfig();
 
-    public UhcEvents(Player player) {
-        this.player = player;
-    }
+    private BukkitTask spawnTNTtask;
+    private BukkitTask spawnAnvilTask;
+    private int tntCounter = 0;
+    private int anvilCounter = 0;
 
-    UhcInterface spawnTNT = () -> {
+
+    private UhcInterface spawnTNT = (player) -> {
+        int spawnInterval = config.getInt("uhc.events.fallingTNT.spawnInterval");
+        int repeatCount = config.getInt("uhc.events.fallingTNT.repeatCount");
+
         spawnTNTtask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            Location TNTloc = player.getLocation();
-            //spawns primed TNT 10 blocks above a player
-            TNTloc.setY(TNTloc.getY() + 10);
-            player.getWorld().spawn(TNTloc, TNTPrimed.class);
+            Location tntLoc = player.getLocation();
+            //spawns primed TNT 5 blocks above a player
+            tntLoc.setY(tntLoc.getY() + 5);
+            TNTPrimed tnt = player.getWorld().spawn(tntLoc, TNTPrimed.class);
+            //TNT explodes after 20 ticks (1 second)
+            tnt.setFuseTicks(Constants.SECOND);
 
-            if (TNTcounter == Constants.UHC_SPAWNED_ENTITY_COUNT) {
+            if (tntCounter == repeatCount) {
                 spawnTNTtask.cancel();
-                TNTcounter = 0;
+                tntCounter = 0;
             }
-            TNTcounter++;
-        }, 0, Constants.UHC_SPAWN_ENTITY_PERIOD * Constants.TICK);
+            tntCounter++;
+        }, 0, spawnInterval * Constants.SECOND);
     };
 
-    UhcInterface spawnAnvil = () -> {
+    private UhcInterface spawnAnvil = (player) -> {
+        int spawnInterval = config.getInt("uhc.events.fallingAnvil.spawnInterval");
+        int repeatCount = config.getInt("uhc.events.fallingAnvil.repeatCount");
+
         spawnAnvilTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             Location anvilLoc = player.getLocation();
-            //spawns anvil 10 blocks above a player
-            anvilLoc.setY(anvilLoc.getY() + 10);
+            //spawns anvil 5 blocks above a player
+            anvilLoc.setY(anvilLoc.getY() + 5);
             FallingBlock anvil = player.getWorld().spawnFallingBlock(anvilLoc, Material.ANVIL.createBlockData());
             
-            //removes anvil after 5 seconds
+            //removes anvil after 2 seconds
             Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
                 if(anvil.isValid()) anvil.remove();
-            }, 5 * Constants.TICK);
+            }, 2 * Constants.SECOND);
 
-            if (anvilCounter == Constants.UHC_SPAWNED_ENTITY_COUNT) {
+            if (anvilCounter == repeatCount) {
                 spawnAnvilTask.cancel();
                 anvilCounter = 0;
             }
             anvilCounter++;
-        }, 0, Constants.UHC_SPAWN_ENTITY_PERIOD * Constants.TICK);
+        }, 0, spawnInterval * Constants.SECOND);
     };
     
 
-    UhcInterface[] actions = { spawnTNT, spawnAnvil };
+    private UhcInterface[] actions = { spawnTNT, spawnAnvil };
 
     //chooses a random event to execute
-    public void randomizeEvent() {
+    public void randomizeEvent(ArrayList<Player> alivePlayers) {
         int i = new Random().nextInt(actions.length);
-        actions[i].executeEvent();
+        
+        for(Player player : alivePlayers)
+            actions[i].executeEvent(player);
     }
 }
