@@ -26,7 +26,7 @@ public class Uhc implements CommandExecutor, TabCompleter {
     
     private SCIvent plugin = SCIvent.getInstance();
     private FileConfiguration config = plugin.getConfig();
-    private File configFile = plugin.getConfigFile();
+    private static String configPath = "uhc.spawn";
 
     private ArrayList<Player> alivePlayers;
     private BukkitTask uhcTask;
@@ -54,16 +54,16 @@ public class Uhc implements CommandExecutor, TabCompleter {
 
         if (args[0].equals("setSpawn")) {   
             Player player = (Player) sender;
-            setSpawn(player.getLocation());
+            setSpawnLoc(player.getLocation());
             player.sendMessage(ChatColor.GREEN + "Player spawn location has been successfully set!");
         }
         
         else if (args[0].equals("start")) {
-            Location spawnLoc = getSpawn();
+            Location spawnLoc = getSpawnLoc();
             if (spawnLoc == null)
                 sender.sendMessage(ChatColor.RED + "Player spawn location is not set. Use /uhc setSpawn");
 
-            else if (!Lobby.checkLobbyLoc())
+            else if (Lobby.getSpawnLoc() == null)
                 sender.sendMessage(ChatColor.RED + "Lobby spawn location is not set. Use /lobby setSpawn");
 
             else startUhc(sender, spawnLoc);
@@ -81,42 +81,13 @@ public class Uhc implements CommandExecutor, TabCompleter {
         sender.sendMessage(ChatColor.RED + "Correct usage:  /uhc start  or  /uhc setSpawn");
     }
 
-    //saves the player spawn location to config file
-    private void setSpawn(Location loc) {     
-        config.set("uhc.spawn.world", loc.getWorld().getName());
-        config.set("uhc.spawn.x", (float) Math.floor( loc.getX() ) + 0.5f);
-        config.set("uhc.spawn.y", (float) Math.floor( loc.getY() ) + 0.5f);
-        config.set("uhc.spawn.z", (float) Math.floor( loc.getZ() ) + 0.5f);
-        config.set("uhc.spawn.yaw", Math.floor( loc.getYaw() ));
-        config.set("uhc.spawn.pitch", Math.floor( loc.getPitch() ));
 
-        try {
-            config.save(configFile);
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+    private void setSpawnLoc(Location loc) {  
+        Utils.setSpawn(configPath, loc);   
     }
 
-    //gets the player spawn location from a config file
-    private Location getSpawn() {
-        String path = "uhc.spawn";
-
-        if (
-            config.contains(path + ".world") && config.contains(path + ".x") &&
-            config.contains(path + ".y") && config.contains(path + ".z") &&
-            config.contains(path + ".yaw") && config.contains(path + ".pitch")
-        ) {
-            return new Location(
-                Bukkit.getWorld(config.getString(path + ".world")),
-                config.getDouble(path + ".x"),
-                config.getDouble(path + ".y"),
-                config.getDouble(path + ".z"),
-                (float) config.getDouble(path + "yaw"),
-                (float) config.getDouble(path + "pitch")
-            );
-        }
-        else return null;
+    private Location getSpawnLoc() {
+        return Utils.getSpawn(configPath);
     }
 
 
@@ -150,7 +121,7 @@ public class Uhc implements CommandExecutor, TabCompleter {
     }
     
     private void stopUhc(Player winner) {
-        //stops repeating task timer from startUhc()
+        //stops repeating the task timer from startUhc()
         uhcTask.cancel();
         Bukkit.broadcastMessage(winner.getName() + " wygrał!");
     }

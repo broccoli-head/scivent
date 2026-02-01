@@ -37,19 +37,8 @@ public class SCIvent extends JavaPlugin implements Listener {
         this.getCommand("lobby").setExecutor(new Lobby());
 
         getLogger().info("SCIvent plugin loaded correctly!");
-
-        World defaultWorld = Bukkit.getWorld("world");
-        if (defaultWorld != null) {
-            Location defaultSpawn = defaultWorld.getSpawnLocation();
-            String path = "general.lobbySpawn";
-
-            pluginConfig.set(path + ".world", defaultWorld.getName());
-            pluginConfig.set(path + ".x", defaultSpawn.getX());
-            pluginConfig.set(path + ".y", defaultSpawn.getY());
-            pluginConfig.set(path + ".z", defaultSpawn.getZ());
-            pluginConfig.set(path + ".yaw", defaultSpawn.getYaw());
-            pluginConfig.set(path + ".pitch", defaultSpawn.getPitch());
-        }
+        
+        if (Lobby.getSpawnLoc() == null) setDefaultSpawnLoc();
     }
 
     @Override
@@ -87,6 +76,22 @@ public class SCIvent extends JavaPlugin implements Listener {
         }
     }
 
+    //sets a lobby spawn location if haven't been set yet
+    private void setDefaultSpawnLoc() {
+        World defaultWorld = Bukkit.getWorld("world");
+        if (defaultWorld != null) {
+            Location defaultSpawn = defaultWorld.getSpawnLocation();
+            String path = "general.lobbySpawn";
+
+            pluginConfig.set(path + ".world", defaultWorld.getName());
+            pluginConfig.set(path + ".x", defaultSpawn.getX());
+            pluginConfig.set(path + ".y", defaultSpawn.getY());
+            pluginConfig.set(path + ".z", defaultSpawn.getZ());
+            pluginConfig.set(path + ".yaw", defaultSpawn.getYaw());
+            pluginConfig.set(path + ".pitch", defaultSpawn.getPitch());
+        }
+    }
+
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
@@ -110,7 +115,7 @@ public class SCIvent extends JavaPlugin implements Listener {
     public void onPlayerRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
         
-        //saturates player 1 tick later after respawning to prevent effect clearing
+        //saturates a player 1 tick later after respawning to prevent effect clearing
         Bukkit.getScheduler().runTaskLater(this, () -> {
             Utils.saturatePlayer(player);
         }, 1L);

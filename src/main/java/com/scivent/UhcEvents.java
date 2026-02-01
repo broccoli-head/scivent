@@ -30,7 +30,7 @@ public class UhcEvents {
 
         spawnTNTtask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             Location tntLoc = player.getLocation();
-            //spawns primed TNT 5 blocks above a player
+            //spawns a primed TNT 5 blocks above the player
             tntLoc.setY(tntLoc.getY() + 5);
             TNTPrimed tnt = player.getWorld().spawn(tntLoc, TNTPrimed.class);
             //TNT explodes after 20 ticks (1 second)
@@ -50,11 +50,11 @@ public class UhcEvents {
 
         spawnAnvilTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             Location anvilLoc = player.getLocation();
-            //spawns anvil 5 blocks above a player
+            //spawns an anvil 5 blocks above the player
             anvilLoc.setY(anvilLoc.getY() + 5);
             FallingBlock anvil = player.getWorld().spawnFallingBlock(anvilLoc, Material.ANVIL.createBlockData());
             
-            //removes anvil after 2 seconds
+            //removes the anvil after 2 seconds
             Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
                 if(anvil.isValid()) anvil.remove();
             }, 2 * Constants.SECOND);
